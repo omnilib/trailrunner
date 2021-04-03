@@ -1,0 +1,41 @@
+[build-system]
+requires = ["flit_core >=3,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.metadata]
+module = "trailrunner"
+author = "John Reese"
+author-email = "john@noswap.com"
+description-file = "README.md"
+home-page = "https://github.com/jreese/trailrunner"
+requires = []
+requires-python = ">=3.6"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+
+[tool.flit.sdist]
+exclude = [
+    ".github/",
+]
+
+[tool.attribution]
+name = "trailrunner"
+package = "trailrunner"
+version_file = true
+signed_tags = true
+
+[tool.coverage.run]
+branch = true
+include = ["ufmt/*"]
+omit = ["ufmt/tests/*"]
+
+[tool.coverage.report]
+fail_under = 100
+precision = 1
+show_missing = true
+skip_covered = true
