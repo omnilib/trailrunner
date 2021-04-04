@@ -18,6 +18,12 @@ ROOT_MARKERS = [Path("pyproject.toml"), Path(".git"), Path(".hg")]
 
 
 def project_root(path: Path) -> Path:
+    """
+    Find the project root, looking upward from the given path.
+
+    Looks through all parent paths until either the root is reached, or a directory
+    is found that contains any of :attr:`trailrunner.core.ROOT_MARKERS`.
+    """
     real_path = path.resolve()
 
     parents = list(real_path.parents)
@@ -32,6 +38,12 @@ def project_root(path: Path) -> Path:
 
 
 def gitignore(path: Path) -> PathSpec:
+    """
+    Generate a `PathSpec` object for a .gitignore file in the given directory.
+
+    If none is found, an empty PathSpec is returned. If the path is not a directory,
+    `ValueError` is raised.
+    """
     if not path.is_dir():
         raise ValueError(f"path {path} not a directory")
 
@@ -45,6 +57,15 @@ def gitignore(path: Path) -> PathSpec:
 
 
 def walk(path: Path) -> Iterator[Path]:
+    """
+    Generate all significant file paths, starting from the given path.
+
+    Finds the project root and any associated gitignore. Filters any paths that match
+    a gitignore pattern. Recurses into subdirectories, and otherwise only includes
+    files that match the :attr:`trailrunner.core.INCLUDE_PATTERN` regex.
+
+    Returns a generator that yields each significant file as the tree is walked.
+    """
     root = project_root(path)
     ignore = gitignore(root)
     include = PathSpec([RegexPattern(INCLUDE_PATTERN)])
@@ -65,6 +86,18 @@ def walk(path: Path) -> Iterator[Path]:
 
 
 def run(paths: Iterable[Path], func: Callable[[Path], T]) -> Dict[Path, T]:
+    """
+    Run a given function once for each path, using a process pool for concurrency.
+
+    For each path given, `func` will be called with `path` as the only argument.
+    To pass any other positional or keyword arguments, use `functools.partial`.
+
+    Results from each path will be returned as a dictionary mapping path to result.
+
+    Uses a process pool with "spawned" processes that share no state with the parent
+    process, to enforce consistent behavior on Linux, macOS, and Windows, where forked
+    processes are not possible.
+    """
     paths = list(paths)
 
     with EXECUTOR() as exe:
@@ -74,6 +107,12 @@ def run(paths: Iterable[Path], func: Callable[[Path], T]) -> Dict[Path, T]:
 
 
 def walk_and_run(paths: Iterable[Path], func: Callable[[Path], T]) -> Dict[Path, T]:
+    """
+    Walks each path given, and runs the given function on all gathered paths.
+
+    See :func:`walk` for details on how paths are gathered, and :func:`run` for how
+    functions are run for each gathered path.
+    """
     all_paths: List[Path] = []
     for path in paths:
         all_paths.extend(walk(path))

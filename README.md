@@ -1,6 +1,6 @@
 # trailrunner
 
-Walk paths and run functions
+Walk paths and run things
 
 [![version](https://img.shields.io/pypi/v/trailrunner.svg)](https://pypi.org/project/trailrunner)
 [![documentation](https://readthedocs.org/projects/trailrunner/badge/?version=latest)](https://trailrunner.omnilib.dev)
