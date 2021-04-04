@@ -7,3 +7,4 @@ Run things on paths
 
 __author__ = "John Reese"
 from .__version__ import __version__
+from .core import run, walk, walk_and_run
