@@ -8,7 +8,7 @@ author = "John Reese"
 author-email = "john@noswap.com"
 description-file = "README.md"
 home-page = "https://github.com/jreese/trailrunner"
-requires = []
+requires = ["pathspec>=0.8.1"]
 requires-python = ">=3.6"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -31,8 +31,8 @@ signed_tags = true
 
 [tool.coverage.run]
 branch = true
-include = ["ufmt/*"]
-omit = ["ufmt/tests/*"]
+include = ["trailrunner/*"]
+omit = ["trailrunner/tests/*"]
 
 [tool.coverage.report]
 fail_under = 100
