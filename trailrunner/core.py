@@ -9,8 +9,6 @@ from typing import Iterable, Iterator, Callable, TypeVar, List, Dict
 from pathspec import PathSpec, RegexPattern
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
-import trailrunner
-
 T = TypeVar("T")
 
 
@@ -29,6 +27,7 @@ def set_context(context: multiprocessing.context.BaseContext) -> None:
 
     The passed context must be the result of calling `multiprocessing.get_context(...)`.
     """
+    import trailrunner
     trailrunner.context = context
 
 
@@ -39,6 +38,7 @@ def default_executor() -> ProcessPoolExecutor:
     Uses the active multiprocessing context (see :func:`set_context`) to run tasks
     on a pool of child processes.
     """
+    import trailrunner
     return ProcessPoolExecutor(mp_context=trailrunner.context)
 
 
