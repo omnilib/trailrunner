@@ -1,20 +1,67 @@
 # Copyright 2021 John Reese
 # Licensed under the MIT license
 
-from concurrent.futures import ProcessPoolExecutor, Executor
-from multiprocessing import get_context
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, Executor
 from pathlib import Path
-from typing import Iterable, Iterator, Callable, TypeVar, List, Dict, Type
+from typing import Iterable, Iterator, Callable, TypeVar, List, Dict
 
 from pathspec import PathSpec, RegexPattern
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
+import trailrunner
+
 T = TypeVar("T")
 
-CONTEXT = get_context("spawn")
-EXECUTOR: Type[Executor] = ProcessPoolExecutor
+
 INCLUDE_PATTERN = r".+\.pyi?$"
 ROOT_MARKERS = [Path("pyproject.toml"), Path(".git"), Path(".hg")]
+
+
+def set_context(context: multiprocessing.context.BaseContext) -> None:
+    """
+    Override the multiprocessing context used by the default executor.
+
+    By default, trailrunner uses a "spawn" multiprocessing context for consistent
+    behavior across all major platforms. In some cases, "fork" or "forkserver" contexts
+    may be more useful, but those contexts are not available on Windows, and may be
+    troublesome on macOS.
+
+    The passed context must be the result of calling `multiprocessing.get_context(...)`.
+    """
+    trailrunner.context = context
+
+
+def default_executor() -> ProcessPoolExecutor:
+    """
+    Default executor for trailrunner.
+
+    Uses the active multiprocessing context (see :func:`set_context`) to run tasks
+    on a pool of child processes.
+    """
+    return ProcessPoolExecutor(mp_context=trailrunner.context)
+
+
+def thread_executor() -> ThreadPoolExecutor:
+    """
+    Thread pool executor, for testing trailrunner without multiprocessing.
+    """
+    return ThreadPoolExecutor()
+
+
+EXECUTOR: Callable[[], Executor] = default_executor
+
+
+def set_executor(callable: Callable[[], Executor]) -> None:
+    """
+    Override the executor factory used when running tasks.
+
+    This callable must take no arguments, and return an object that inherits from
+    or otherwise conforms to `concurrent.futures.Executor`.
+    """
+    global EXECUTOR
+
+    EXECUTOR = callable
 
 
 def project_root(path: Path) -> Path:

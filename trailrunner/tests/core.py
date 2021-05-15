@@ -1,16 +1,19 @@
 # Copyright 2021 John Reese
 # Licensed under the MIT license
 
+import multiprocessing
 import os
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Iterator
 from unittest import TestCase
+from unittest.mock import Mock
 
 from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
+import trailrunner
 from trailrunner import core
 
 
@@ -28,11 +31,53 @@ class CoreTest(TestCase):
     maxDiff = None
 
     def setUp(self) -> None:
+        core.set_executor(core.thread_executor)
         self.temp_dir = TemporaryDirectory()
         self.td = Path(self.temp_dir.name).resolve()
 
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
+
+    def test_set_context(self) -> None:
+        orig_context = trailrunner.context
+
+        new_context = multiprocessing.get_context("fork")
+        core.set_context(new_context)
+        self.assertEqual(trailrunner.context, new_context)
+
+        core.set_context(orig_context)
+        self.assertEqual(trailrunner.context, orig_context)
+
+    def test_set_executor(self) -> None:
+        mock_factory = Mock(return_value=core.thread_executor())
+
+        core.set_executor(mock_factory)
+        self.assertEqual(mock_factory, core.EXECUTOR)
+
+        def foo(path: Path) -> Path:
+            return path
+
+        expected = {Path(): Path(), Path("foo"): Path("foo")}
+        results = core.run([Path(), Path("foo")], foo)
+
+        mock_factory.assert_called_once_with()
+        self.assertEqual(expected, results)
+
+    def test_default_executor(self) -> None:
+        def foo(path: Path) -> Path:
+            return path / "foo"
+
+        expected = {
+            Path(): Path("foo"),
+            Path("/"): Path("/foo"),
+        }
+        result = core.run([Path(), Path("/")], foo)
+        self.assertEqual(expected, result)
+
+        core.set_executor(core.default_executor)
+        self.assertEqual(core.default_executor, core.EXECUTOR)
+        with self.assertRaisesRegex(AttributeError, "Can't pickle local object"):
+            core.run([Path(), Path("/")], foo)
 
     def test_project_root_empty(self) -> None:
         result = core.project_root(self.td)
