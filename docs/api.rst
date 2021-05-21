@@ -24,10 +24,8 @@ Advanced
 Utilities
 ---------
 
-.. module:: trailrunner.core
-
-.. autoattribute:: trailrunner.core.INCLUDE_PATTERN
-.. autoattribute:: trailrunner.core.ROOT_MARKERS
+.. autodata:: trailrunner.core.INCLUDE_PATTERN
+.. autodata:: trailrunner.core.ROOT_MARKERS
 
 .. autofunction:: trailrunner.core.project_root
 .. autofunction:: trailrunner.core.gitignore

@@ -19,6 +19,6 @@ div.omnilib-badges a:hover {
     border: none;
 }
 
-dl.function, dl.attribute {
+dl.function, dl.attribute, dl.class, dl.method, dl.field-list, dl.data {
     margin-bottom: 15px;
 }
