@@ -2,6 +2,7 @@
 # Licensed under the MIT license
 
 import multiprocessing
+import sys
 from concurrent.futures import ProcessPoolExecutor, Executor
 from pathlib import Path
 from typing import Iterable, Iterator, Callable, TypeVar, List, Dict, Optional
@@ -99,7 +100,7 @@ class Trailrunner:
         """
         :param context: :mod:`multiprocessing` context used by the default process pool
             executor. Ignored if :attr:`DEFAULT_EXECUTOR` is set, or `executor_factory`
-            is passed.
+            is passed. Not supported in Python 3.6 or older.
         :param executor_factory: Alternative executor factory. Must be a function that
             takes no arguments, and returns an instance
             of :class:`concurrent.futures.Executor`.
@@ -113,6 +114,8 @@ class Trailrunner:
         """
         Default executor factory using a ProcessPoolExecutor.
         """
+        if sys.version_info < (3, 7):  # pragma: nocover
+            return ProcessPoolExecutor()
         return ProcessPoolExecutor(mp_context=self.context)
 
     def walk(self, path: Path) -> Iterator[Path]:
