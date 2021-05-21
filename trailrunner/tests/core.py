@@ -3,17 +3,17 @@
 
 import multiprocessing
 import os
+from concurrent.futures.process import ProcessPoolExecutor
+from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Iterator
 from unittest import TestCase
-from unittest.mock import Mock
 
 from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
-import trailrunner
 from trailrunner import core
 
 
@@ -31,53 +31,47 @@ class CoreTest(TestCase):
     maxDiff = None
 
     def setUp(self) -> None:
-        core.set_executor(core.thread_executor)
+        core.Trailrunner.DEFAULT_EXECUTOR = ThreadPoolExecutor
         self.temp_dir = TemporaryDirectory()
         self.td = Path(self.temp_dir.name).resolve()
 
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
+        core.Trailrunner.DEFAULT_EXECUTOR = None
 
-    def test_set_context(self) -> None:
-        orig_context = trailrunner.context
+    def test_executor(self) -> None:
+        def spawn_factory() -> ProcessPoolExecutor:
+            return ProcessPoolExecutor(mp_context=multiprocessing.get_context("spawn"))
 
-        new_context = multiprocessing.get_context("fork")
-        core.set_context(new_context)
-        self.assertEqual(trailrunner.context, new_context)
-
-        core.set_context(orig_context)
-        self.assertEqual(trailrunner.context, orig_context)
-
-    def test_set_executor(self) -> None:
-        mock_factory = Mock(return_value=core.thread_executor())
-
-        core.set_executor(mock_factory)
-        self.assertEqual(mock_factory, core.EXECUTOR)
-
-        def foo(path: Path) -> Path:
-            return path
-
-        expected = {Path(): Path(), Path("foo"): Path("foo")}
-        results = core.run([Path(), Path("foo")], foo)
-
-        mock_factory.assert_called_once_with()
-        self.assertEqual(expected, results)
-
-    def test_default_executor(self) -> None:
         def foo(path: Path) -> Path:
             return path / "foo"
 
+        inputs = [Path(), Path("/")]
         expected = {
             Path(): Path("foo"),
             Path("/"): Path("/foo"),
         }
-        result = core.run([Path(), Path("/")], foo)
-        self.assertEqual(expected, result)
 
-        core.set_executor(core.default_executor)
-        self.assertEqual(core.default_executor, core.EXECUTOR)
-        with self.assertRaisesRegex(AttributeError, "Can't pickle local object"):
-            core.run([Path(), Path("/")], foo)
+        with self.subTest("explicit factories"):
+            # thread pool should work just fine
+            result = core.Trailrunner(executor_factory=ThreadPoolExecutor).run(
+                inputs, foo
+            )
+            self.assertEqual(expected, result)
+
+            # default process pool should fail to pickle foo()
+            with self.assertRaisesRegex(AttributeError, "Can't pickle local object"):
+                core.Trailrunner(executor_factory=spawn_factory).run(inputs, foo)
+
+        with self.subTest("default factories"):
+            # setUp overrides default process pool with thread pool
+            result = core.Trailrunner().run(inputs, foo)
+            self.assertEqual(expected, result)
+
+            # reset the override so it defaults to a process pool again
+            core.Trailrunner.DEFAULT_EXECUTOR = None
+            with self.assertRaisesRegex(AttributeError, "Can't pickle local object"):
+                core.Trailrunner().run(inputs, foo)
 
     def test_project_root_empty(self) -> None:
         result = core.project_root(self.td)

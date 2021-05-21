@@ -14,11 +14,8 @@ Basic
 Advanced
 --------
 
-.. autofunction:: trailrunner.set_context
-.. autofunction:: trailrunner.set_executor
-
-.. autofunction:: trailrunner.default_executor
-.. autofunction:: trailrunner.thread_executor
+.. autoclass:: trailrunner.Trailrunner
+    :special-members: __init__
 
 
 Utilities

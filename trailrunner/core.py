@@ -2,9 +2,9 @@
 # Licensed under the MIT license
 
 import multiprocessing
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, Executor
+from concurrent.futures import ProcessPoolExecutor, Executor
 from pathlib import Path
-from typing import Iterable, Iterator, Callable, TypeVar, List, Dict
+from typing import Iterable, Iterator, Callable, TypeVar, List, Dict, Optional
 
 from pathspec import PathSpec, RegexPattern
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
@@ -12,56 +12,20 @@ from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 T = TypeVar("T")
 
 
-INCLUDE_PATTERN = r".+\.pyi?$"
-ROOT_MARKERS = [Path("pyproject.toml"), Path(".git"), Path(".hg")]
+EXECUTOR = None  # deprecated, unused
 
+INCLUDE_PATTERN: str = r".+\.pyi?$"
+"""
+Regex pattern used to match against filenames that should be included in results when
+recursively walking directories. Any files not matching this regex will be ignored.
+"""
 
-def set_context(context: multiprocessing.context.BaseContext) -> None:
-    """
-    Override the multiprocessing context used by the default executor.
-
-    By default, trailrunner uses a "spawn" multiprocessing context for consistent
-    behavior across all major platforms. In some cases, "fork" or "forkserver" contexts
-    may be more useful, but those contexts are not available on Windows, and may be
-    troublesome on macOS.
-
-    The passed context must be the result of calling `multiprocessing.get_context(...)`.
-    """
-    import trailrunner
-    trailrunner.context = context
-
-
-def default_executor() -> ProcessPoolExecutor:
-    """
-    Default executor for trailrunner.
-
-    Uses the active multiprocessing context (see :func:`set_context`) to run tasks
-    on a pool of child processes.
-    """
-    import trailrunner
-    return ProcessPoolExecutor(mp_context=trailrunner.context)
-
-
-def thread_executor() -> ThreadPoolExecutor:
-    """
-    Thread pool executor, for testing trailrunner without multiprocessing.
-    """
-    return ThreadPoolExecutor()
-
-
-EXECUTOR: Callable[[], Executor] = default_executor
-
-
-def set_executor(callable: Callable[[], Executor]) -> None:
-    """
-    Override the executor factory used when running tasks.
-
-    This callable must take no arguments, and return an object that inherits from
-    or otherwise conforms to `concurrent.futures.Executor`.
-    """
-    global EXECUTOR
-
-    EXECUTOR = callable
+ROOT_MARKERS: List[Path] = [Path("pyproject.toml"), Path(".git"), Path(".hg")]
+"""
+List of :class:`pathlib.Path` objects used to "mark" the root of project. This is used
+by :func:`gitignore` for finding and reading a :file:`.gitignore` file from the project
+root of a given path or directory.
+"""
 
 
 def project_root(path: Path) -> Path:
@@ -69,7 +33,7 @@ def project_root(path: Path) -> Path:
     Find the project root, looking upward from the given path.
 
     Looks through all parent paths until either the root is reached, or a directory
-    is found that contains any of :attr:`trailrunner.core.ROOT_MARKERS`.
+    is found that contains any of :attr:`ROOT_MARKERS`.
     """
     real_path = path.resolve()
 
@@ -103,6 +67,117 @@ def gitignore(path: Path) -> PathSpec:
     return PathSpec([])
 
 
+class Trailrunner:
+    """
+    Self-contained Trailrunner instance with configurable multiprocessing semantics.
+
+    The basic API functions above are lightweight wrappers calling their respective
+    methods on fresh instances of the :class:`Trailrunner` class with no arguments.
+
+    By default, uses a process pool executor with "spawn" child processes, to enforce
+    consistent behavior when running functions on Linux, macOS, and Windows. This can
+    be overridden for each individual instance by passing an executor factory during
+    initialization.
+    """
+
+    DEFAULT_EXECUTOR: Optional[Callable[[], Executor]] = None
+    """
+    Global override for the default executor, used when `executor_factory` is not
+    passed to new instances. This is intended primarily for use in unit testing, when
+    it is desirable to force using thread pools by default.
+
+    Prefer explicitly passing `executor_factory` when possible to avoid conflicting
+    behavior with other packages that also use trailrunner.
+    """
+
+    def __init__(
+        self,
+        *,
+        context: Optional[multiprocessing.context.BaseContext] = None,
+        executor_factory: Optional[Callable[[], Executor]] = None,
+    ):
+        """
+        :param context: :mod:`multiprocessing` context used by the default process pool
+            executor. Ignored if :attr:`DEFAULT_EXECUTOR` is set, or `executor_factory`
+            is passed.
+        :param executor_factory: Alternative executor factory. Must be a function that
+            takes no arguments, and returns an instance
+            of :class:`concurrent.futures.Executor`.
+        """
+        self.context = context or multiprocessing.get_context("spawn")
+        self.executor_factory = (
+            executor_factory or self.DEFAULT_EXECUTOR or self._default_executor
+        )
+
+    def _default_executor(self) -> Executor:
+        """
+        Default executor factory using a ProcessPoolExecutor.
+        """
+        return ProcessPoolExecutor(mp_context=self.context)
+
+    def walk(self, path: Path) -> Iterator[Path]:
+        """
+        Generate all significant file paths, starting from the given path.
+
+        Finds the project root and any associated gitignore. Filters any paths that match
+        a gitignore pattern. Recurses into subdirectories, and otherwise only includes
+        files that match the :attr:`trailrunner.core.INCLUDE_PATTERN` regex.
+
+        Returns a generator that yields each significant file as the tree is walked.
+        """
+        root = project_root(path)
+        ignore = gitignore(root)
+        include = PathSpec([RegexPattern(INCLUDE_PATTERN)])
+
+        def gen(children: Iterable[Path]) -> Iterator[Path]:
+            for child in children:
+
+                if ignore.match_file(child):
+                    continue
+
+                if child.is_file() and include.match_file(child):
+                    yield child
+
+                elif child.is_dir():
+                    yield from gen(child.iterdir())
+
+        return gen([path])
+
+    def run(self, paths: Iterable[Path], func: Callable[[Path], T]) -> Dict[Path, T]:
+        """
+        Run a given function once for each path, using an executor for concurrency.
+
+        For each path given, `func` will be called with `path` as the only argument.
+        To pass any other positional or keyword arguments, use `functools.partial`.
+
+        Results from each path will be returned as a dictionary mapping path to result.
+        """
+        paths = list(paths)
+
+        with self.executor_factory() as exe:
+            results = list(exe.map(func, paths))
+
+        return dict(zip(paths, results))
+
+    def walk_and_run(
+        self, paths: Iterable[Path], func: Callable[[Path], T]
+    ) -> Dict[Path, T]:
+        """
+        Walks each path given, and runs the given function on all gathered paths.
+
+        See :meth:`Trailrunner.walk` for details on how paths are gathered, and
+        :meth:`Trailrunner.run` for how functions are run for each gathered path.
+        """
+        all_paths: List[Path] = []
+        for path in paths:
+            all_paths.extend(self.walk(path))
+
+        return self.run(all_paths, func)
+
+
+# Maintain basic API with a default TrailRunner instance
+
+
 def walk(path: Path) -> Iterator[Path]:
     """
     Generate all significant file paths, starting from the given path.
@@ -113,23 +188,7 @@ def walk(path: Path) -> Iterator[Path]:
 
     Returns a generator that yields each significant file as the tree is walked.
     """
-    root = project_root(path)
-    ignore = gitignore(root)
-    include = PathSpec([RegexPattern(INCLUDE_PATTERN)])
-
-    def gen(children: Iterable[Path]) -> Iterator[Path]:
-        for child in children:
-
-            if ignore.match_file(child):
-                continue
-
-            if child.is_file() and include.match_file(child):
-                yield child
-
-            elif child.is_dir():
-                yield from gen(child.iterdir())
-
-    return gen([path])
+    return Trailrunner().walk(path)
 
 
 def run(paths: Iterable[Path], func: Callable[[Path], T]) -> Dict[Path, T]:
@@ -145,12 +204,7 @@ def run(paths: Iterable[Path], func: Callable[[Path], T]) -> Dict[Path, T]:
     process, to enforce consistent behavior on Linux, macOS, and Windows, where forked
     processes are not possible.
     """
-    paths = list(paths)
-
-    with EXECUTOR() as exe:
-        results = list(exe.map(func, paths))
-
-    return dict(zip(paths, results))
+    return Trailrunner().run(paths, func)
 
 
 def walk_and_run(paths: Iterable[Path], func: Callable[[Path], T]) -> Dict[Path, T]:
@@ -160,8 +214,4 @@ def walk_and_run(paths: Iterable[Path], func: Callable[[Path], T]) -> Dict[Path,
     See :func:`walk` for details on how paths are gathered, and :func:`run` for how
     functions are run for each gathered path.
     """
-    all_paths: List[Path] = []
-    for path in paths:
-        all_paths.extend(walk(path))
-
-    return run(all_paths, func)
+    return Trailrunner().walk_and_run(paths, func)
