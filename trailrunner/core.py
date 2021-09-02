@@ -7,10 +7,11 @@ from concurrent.futures import ProcessPoolExecutor, Executor
 from pathlib import Path
 from typing import Iterable, Iterator, Callable, TypeVar, List, Dict, Optional
 
-from pathspec import PathSpec, RegexPattern
+from pathspec import PathSpec, Pattern, RegexPattern
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
 T = TypeVar("T")
+Excludes = Optional[List[str]]
 
 
 EXECUTOR = None  # deprecated, unused
@@ -49,6 +50,19 @@ def project_root(path: Path) -> Path:
     return parent
 
 
+def pathspec(patterns: Excludes, *, style: Pattern = GitWildMatchPattern) -> PathSpec:
+    """
+    Generate a `PathSpec` object for the given set of paths to include or exclude.
+
+    If None is given, an empty PathSpec is returned.
+    """
+
+    if patterns:
+        return PathSpec.from_lines(style, patterns)
+
+    return PathSpec([])
+
+
 def gitignore(path: Path) -> PathSpec:
     """
     Generate a `PathSpec` object for a .gitignore file in the given directory.
@@ -61,11 +75,11 @@ def gitignore(path: Path) -> PathSpec:
 
     gi_path = path / ".gitignore"
 
+    lines: Excludes = None
     if gi_path.is_file():
         lines = gi_path.read_text().splitlines()
-        return PathSpec.from_lines(GitWildMatchPattern, lines)
 
-    return PathSpec([])
+    return pathspec(lines, style=GitWildMatchPattern)
 
 
 class Trailrunner:
@@ -118,7 +132,7 @@ class Trailrunner:
             return ProcessPoolExecutor()
         return ProcessPoolExecutor(mp_context=self.context)
 
-    def walk(self, path: Path) -> Iterator[Path]:
+    def walk(self, path: Path, *, excludes: Excludes = None) -> Iterator[Path]:
         """
         Generate all significant file paths, starting from the given path.
 
@@ -126,10 +140,13 @@ class Trailrunner:
         a gitignore pattern. Recurses into subdirectories, and otherwise only includes
         files that match the :attr:`trailrunner.core.INCLUDE_PATTERN` regex.
 
+        Optional `excludes` parameter allows supplying an extra set of paths (or
+        gitignore-style patterns) to exclude from the final results.
+
         Returns a generator that yields each significant file as the tree is walked.
         """
         root = project_root(path)
-        ignore = gitignore(root)
+        ignore = gitignore(root) + pathspec(excludes)
         include = PathSpec([RegexPattern(INCLUDE_PATTERN)])
 
         def gen(children: Iterable[Path]) -> Iterator[Path]:
@@ -163,7 +180,11 @@ class Trailrunner:
         return dict(zip(paths, results))
 
     def walk_and_run(
-        self, paths: Iterable[Path], func: Callable[[Path], T]
+        self,
+        paths: Iterable[Path],
+        func: Callable[[Path], T],
+        *,
+        excludes: Excludes = None,
     ) -> Dict[Path, T]:
         """
         Walks each path given, and runs the given function on all gathered paths.
@@ -181,7 +202,7 @@ class Trailrunner:
 # Maintain basic API with a default TrailRunner instance
 
 
-def walk(path: Path) -> Iterator[Path]:
+def walk(path: Path, *, excludes: Excludes = None) -> Iterator[Path]:
     """
     Generate all significant file paths, starting from the given path.
 
@@ -189,9 +210,12 @@ def walk(path: Path) -> Iterator[Path]:
     a gitignore pattern. Recurses into subdirectories, and otherwise only includes
     files that match the :attr:`trailrunner.core.INCLUDE_PATTERN` regex.
 
+    Optional `excludes` parameter allows supplying an extra set of paths (or
+    gitignore-style patterns) to exclude from the final results.
+
     Returns a generator that yields each significant file as the tree is walked.
     """
-    return Trailrunner().walk(path)
+    return Trailrunner().walk(path, excludes=excludes)
 
 
 def run(paths: Iterable[Path], func: Callable[[Path], T]) -> Dict[Path, T]:
@@ -210,11 +234,13 @@ def run(paths: Iterable[Path], func: Callable[[Path], T]) -> Dict[Path, T]:
     return Trailrunner().run(paths, func)
 
 
-def walk_and_run(paths: Iterable[Path], func: Callable[[Path], T]) -> Dict[Path, T]:
+def walk_and_run(
+    paths: Iterable[Path], func: Callable[[Path], T], *, excludes: Excludes = None
+) -> Dict[Path, T]:
     """
     Walks each path given, and runs the given function on all gathered paths.
 
     See :func:`walk` for details on how paths are gathered, and :func:`run` for how
     functions are run for each gathered path.
     """
-    return Trailrunner().walk_and_run(paths, func)
+    return Trailrunner().walk_and_run(paths, func, excludes=excludes)

@@ -191,6 +191,14 @@ class CoreTest(TestCase):
             ]
             self.assertListEqual(expected, result)
 
+        with self.subTest("absolute subdir no gitignore with excludes"):
+            result = sorted(core.walk(self.td / "foo", excludes=["b.py"]))
+            expected = [
+                self.td / "foo" / "a.py",
+                self.td / "foo" / "bar" / "c.pyi",
+            ]
+            self.assertListEqual(expected, result)
+
         with self.subTest("local root no gitignore"):
             with cd(self.td):
                 result = sorted(core.walk(Path(".")))
@@ -213,6 +221,14 @@ class CoreTest(TestCase):
                 ]
                 self.assertListEqual(expected, result)
 
+        with self.subTest("local subdir no gitignore with excludes"):
+            with cd(self.td):
+                result = sorted(core.walk(Path("foo"), excludes=["foo/bar/"]))
+                expected = [
+                    Path("foo") / "a.py",
+                ]
+                self.assertListEqual(expected, result)
+
         (self.td / ".gitignore").write_text("vendor/\n*.pyi")
 
         with self.subTest("absolute root with gitignore"):
@@ -228,6 +244,13 @@ class CoreTest(TestCase):
             result = sorted(core.walk(self.td / "foo"))
             expected = [
                 self.td / "foo" / "a.py",
+                self.td / "foo" / "bar" / "b.py",
+            ]
+            self.assertListEqual(expected, result)
+
+        with self.subTest("absolute subdir with gitignore and excludes"):
+            result = sorted(core.walk(self.td / "foo", excludes=["a.py"]))
+            expected = [
                 self.td / "foo" / "bar" / "b.py",
             ]
             self.assertListEqual(expected, result)
