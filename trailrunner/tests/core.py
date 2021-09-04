@@ -10,6 +10,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Iterator
 from unittest import TestCase
+from unittest.mock import patch
 
 from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
@@ -72,6 +73,11 @@ class CoreTest(TestCase):
             core.Trailrunner.DEFAULT_EXECUTOR = None
             with self.assertRaisesRegex(AttributeError, "Can't pickle local object"):
                 core.Trailrunner().run(inputs, foo)
+
+        with self.subTest("deprecated EXECUTOR"):
+            with patch("trailrunner.core.EXECUTOR") as mock_exe:
+                core.Trailrunner().run(inputs, foo)
+                mock_exe.assert_called_with()
 
     def test_project_root_empty(self) -> None:
         result = core.project_root(self.td)

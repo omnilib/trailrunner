@@ -14,7 +14,7 @@ T = TypeVar("T")
 Excludes = Optional[List[str]]
 
 
-EXECUTOR = None  # deprecated, unused
+EXECUTOR = None  # deprecated, will be removed by 2.0
 
 INCLUDE_PATTERN: str = r".+\.pyi?$"
 """
@@ -128,6 +128,8 @@ class Trailrunner:
         """
         Default executor factory using a ProcessPoolExecutor.
         """
+        if EXECUTOR:  # deprecated
+            return EXECUTOR()
         if sys.version_info < (3, 7):  # pragma: nocover
             return ProcessPoolExecutor()
         return ProcessPoolExecutor(mp_context=self.context)
