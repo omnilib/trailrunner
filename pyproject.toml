@@ -9,7 +9,7 @@ author-email = "john@noswap.com"
 description-file = "README.md"
 home-page = "https://github.com/jreese/trailrunner"
 requires = ["pathspec>=0.8.1"]
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
