@@ -198,10 +198,9 @@ class CoreTest(TestCase):
             self.assertListEqual(expected, result)
 
         with self.subTest("absolute subdir no gitignore with excludes"):
-            result = sorted(core.walk(self.td / "foo", excludes=["b.py"]))
+            result = sorted(core.walk(self.td / "foo", excludes=["foo/bar/", "b.py"]))
             expected = [
                 self.td / "foo" / "a.py",
-                self.td / "foo" / "bar" / "c.pyi",
             ]
             self.assertListEqual(expected, result)
 
