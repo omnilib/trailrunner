@@ -6,7 +6,7 @@ Walk paths and run things
 [![documentation](https://readthedocs.org/projects/trailrunner/badge/?version=latest)](https://trailrunner.omnilib.dev)
 [![changelog](https://img.shields.io/badge/change-log-blue)](https://trailrunner.omnilib.dev/en/latest/changelog.html)
 [![license](https://img.shields.io/pypi/l/trailrunner.svg)](https://github.com/omnilib/trailrunner/blob/master/LICENSE)
-[![build status](https://github.com/omnilib/trailrunner/workflows/Build/badge.svg)](https://github.com/omnilib/trailrunner/actions)
+[![build status](https://github.com/omnilib/trailrunner/workflows/Build/badge.svg?branch=main)](https://github.com/omnilib/trailrunner/actions)
 [![code coverage](https://img.shields.io/codecov/c/gh/omnilib/trailrunner)](https://codecov.io/gh/omnilib/trailrunner)
 
 trailrunner is a simple library for walking paths on the filesystem, and executing
