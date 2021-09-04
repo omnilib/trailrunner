@@ -153,9 +153,13 @@ class Trailrunner:
 
         def gen(children: Iterable[Path]) -> Iterator[Path]:
             for child in children:
-
                 if ignore.match_file(child):
                     continue
+
+                if child.is_absolute():
+                    relative = child.relative_to(root)
+                    if ignore.match_file(relative):
+                        continue
 
                 if child.is_file() and include.match_file(child):
                     yield child
