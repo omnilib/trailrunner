@@ -28,17 +28,16 @@ def cd(path: Path) -> Iterator[None]:
         os.chdir(cwd)
 
 
+@patch.object(core.Trailrunner, "DEFAULT_EXECUTOR", ThreadPoolExecutor)
 class CoreTest(TestCase):
     maxDiff = None
 
     def setUp(self) -> None:
-        core.Trailrunner.DEFAULT_EXECUTOR = ThreadPoolExecutor
         self.temp_dir = TemporaryDirectory()
         self.td = Path(self.temp_dir.name).resolve()
 
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
-        core.Trailrunner.DEFAULT_EXECUTOR = None
 
     def test_executor(self) -> None:
         def spawn_factory() -> ProcessPoolExecutor:
