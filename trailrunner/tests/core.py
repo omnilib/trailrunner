@@ -3,7 +3,6 @@
 
 import multiprocessing
 import os
-import sys
 from concurrent.futures.process import ProcessPoolExecutor
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -60,13 +59,12 @@ class CoreTest(TestCase):
             )
             self.assertEqual(expected, result)
 
-        if sys.version_info >= (3, 7):
-            with self.subTest("explicit spawn factory"):
-                parent = os.getpid()
-                results = core.Trailrunner(executor_factory=spawn_factory).run(
-                    inputs, getpid
-                )
-                self.assertNotEqual(expected, results)
+        with self.subTest("explicit spawn factory"):
+            parent = os.getpid()
+            results = core.Trailrunner(executor_factory=spawn_factory).run(
+                inputs, getpid
+            )
+            self.assertNotEqual(expected, results)
 
         with self.subTest("patched thread pool"):
             result = core.Trailrunner().run(inputs, getpid)

@@ -60,7 +60,7 @@ of paths to results:
 Install
 -------
 
-trailrunner requires Python 3.6 or newer. You can install it from PyPI:
+trailrunner requires Python 3.7 or newer. You can install it from PyPI:
 
 ```shell-session
 $ pip install trailrunner

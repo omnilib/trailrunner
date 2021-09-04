@@ -2,7 +2,6 @@
 # Licensed under the MIT license
 
 import multiprocessing
-import sys
 from concurrent.futures import ProcessPoolExecutor, Executor
 from pathlib import Path
 from typing import Iterable, Iterator, Callable, TypeVar, List, Dict, Optional
@@ -130,8 +129,6 @@ class Trailrunner:
         """
         if EXECUTOR:  # deprecated
             return EXECUTOR()
-        if sys.version_info < (3, 7):  # pragma: nocover
-            return ProcessPoolExecutor()
         return ProcessPoolExecutor(mp_context=self.context)
 
     def walk(self, path: Path, *, excludes: Excludes = None) -> Iterator[Path]:
