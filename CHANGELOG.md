@@ -1,6 +1,22 @@
 trailrunner
 ===========
 
+v1.1.0
+------
+
+Feature release:
+
+- New, class-based API with simple wrappers
+- Added support for passing extras "excludes" when walking paths
+- Excludes and gitignores are matched against root-relative paths as well
+- Dropped support for Python 3.6, for consistency in multiprocessing
+
+```
+$ git shortlog -s v1.1.0b1...v1.1.0
+     9	John Reese
+```
+
+
 v1.1.0b1
 --------
 
