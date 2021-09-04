@@ -196,7 +196,7 @@ class Trailrunner:
         """
         all_paths: List[Path] = []
         for path in paths:
-            all_paths.extend(self.walk(path))
+            all_paths.extend(self.walk(path, excludes=excludes))
 
         return self.run(all_paths, func)
 
