@@ -3,6 +3,7 @@
 
 import multiprocessing
 import os
+import sys
 from concurrent.futures.process import ProcessPoolExecutor
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -28,6 +29,10 @@ def cd(path: Path) -> Iterator[None]:
         os.chdir(cwd)
 
 
+def getpid(path: Path) -> int:
+    return os.getpid()
+
+
 @patch.object(core.Trailrunner, "DEFAULT_EXECUTOR", ThreadPoolExecutor)
 class CoreTest(TestCase):
     maxDiff = None
@@ -43,40 +48,39 @@ class CoreTest(TestCase):
         def spawn_factory() -> ProcessPoolExecutor:
             return ProcessPoolExecutor(mp_context=multiprocessing.get_context("spawn"))
 
-        def foo(path: Path) -> Path:
-            return path / "foo"
-
-        inputs = [Path(), Path("/")]
+        parent = os.getpid()
+        inputs = [Path()]
         expected = {
-            Path(): Path("foo"),
-            Path("/"): Path("/foo"),
+            Path(): parent,
         }
 
-        with self.subTest("explicit factories"):
-            # thread pool should work just fine
+        with self.subTest("explicit thread pool"):
             result = core.Trailrunner(executor_factory=ThreadPoolExecutor).run(
-                inputs, foo
+                inputs, getpid
             )
             self.assertEqual(expected, result)
 
-            # default process pool should fail to pickle foo()
-            with self.assertRaisesRegex(AttributeError, "Can't pickle local object"):
-                core.Trailrunner(executor_factory=spawn_factory).run(inputs, foo)
+        if sys.version_info >= (3, 7):
+            with self.subTest("explicit spawn factory"):
+                parent = os.getpid()
+                results = core.Trailrunner(executor_factory=spawn_factory).run(
+                    inputs, getpid
+                )
+                self.assertNotEqual(expected, results)
 
-        with self.subTest("default factories"):
-            # setUp overrides default process pool with thread pool
-            result = core.Trailrunner().run(inputs, foo)
+        with self.subTest("patched thread pool"):
+            result = core.Trailrunner().run(inputs, getpid)
             self.assertEqual(expected, result)
 
-            # reset the override so it defaults to a process pool again
-            core.Trailrunner.DEFAULT_EXECUTOR = None
-            with self.assertRaisesRegex(AttributeError, "Can't pickle local object"):
-                core.Trailrunner().run(inputs, foo)
+        with self.subTest("patched default is none"):
+            with patch.object(core.Trailrunner, "DEFAULT_EXECUTOR", None):
+                result = core.Trailrunner().run(inputs, getpid)
+                self.assertNotEqual(expected, result)  # spawned process
 
-        with self.subTest("deprecated EXECUTOR"):
-            with patch("trailrunner.core.EXECUTOR") as mock_exe:
-                core.Trailrunner().run(inputs, foo)
-                mock_exe.assert_called_with()
+                with self.subTest("deprecated EXECUTOR"):
+                    with patch("trailrunner.core.EXECUTOR") as mock_exe:
+                        core.Trailrunner().run(inputs, getpid)
+                        mock_exe.assert_called_with()
 
     def test_project_root_empty(self) -> None:
         result = core.project_root(self.td)
