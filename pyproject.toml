@@ -8,8 +8,8 @@ author = "John Reese"
 author-email = "john@noswap.com"
 description-file = "README.md"
 home-page = "https://github.com/jreese/trailrunner"
-requires = ["pathspec>=0.8.1"]
-requires-python = ">=3.7"
+requires = ["pathspec>=0.8.1", "futures3>=1.0.0; python_version < '3.7'"]
+requires-python = ">=3.6"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",

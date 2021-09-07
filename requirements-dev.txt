@@ -5,6 +5,7 @@ coverage==5.5
 flit==3.2.0
 flake8==3.9.0
 flake8-bugbear==21.4.3
+futures3==1.0.0; python_version < '3.7'
 mypy==0.812
 sphinx==3.5.3
 ufmt==1.2
