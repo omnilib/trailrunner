@@ -3,7 +3,6 @@
 
 import multiprocessing
 import os
-from concurrent.futures.process import ProcessPoolExecutor
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path
@@ -16,6 +15,7 @@ from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
 from trailrunner import core
+from ..compat import ProcessPoolExecutor
 
 
 @contextmanager

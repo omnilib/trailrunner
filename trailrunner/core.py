@@ -2,12 +2,14 @@
 # Licensed under the MIT license
 
 import multiprocessing
-from concurrent.futures import ProcessPoolExecutor, Executor
+from concurrent.futures import Executor
 from pathlib import Path
 from typing import Iterable, Iterator, Callable, TypeVar, List, Dict, Optional
 
 from pathspec import PathSpec, Pattern, RegexPattern
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
+
+from .compat import ProcessPoolExecutor
 
 T = TypeVar("T")
 Excludes = Optional[List[str]]
