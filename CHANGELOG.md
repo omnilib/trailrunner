@@ -1,6 +1,20 @@
 trailrunner
 ===========
 
+v1.1.1
+------
+
+Compatibility update:
+
+- Support Python 3.6 again using futures3 module (#2)
+
+```
+$ git shortlog -s v1.1.0...v1.1.1
+     3	John Reese
+     1	Tim Hatch
+```
+
+
 v1.1.0
 ------
 
