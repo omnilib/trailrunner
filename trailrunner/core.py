@@ -4,7 +4,7 @@
 import multiprocessing
 from concurrent.futures import Executor
 from pathlib import Path
-from typing import Iterable, Iterator, Callable, TypeVar, List, Dict, Optional
+from typing import Callable, Dict, Iterable, Iterator, List, Optional, TypeVar
 
 from pathspec import PathSpec, Pattern, RegexPattern
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
