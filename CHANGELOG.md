@@ -1,6 +1,21 @@
 trailrunner
 ===========
 
+v1.1.2
+------
+
+Maintenance release
+
+- Added PEP 561 `py.typed` markers
+- Tested on Python 3.10
+
+```
+$ git shortlog -s v1.1.1...v1.1.2
+     9	John Reese
+    29	dependabot[bot]
+```
+
+
 v1.1.1
 ------
 
