@@ -8,3 +8,14 @@ Run things on paths
 __author__ = "John Reese"
 from .__version__ import __version__
 from .core import gitignore, project_root, run, Trailrunner, walk, walk_and_run
+
+__all__ = [
+    "__author__",
+    "__version__",
+    "gitignore",
+    "project_root",
+    "run",
+    "Trailrunner",
+    "walk",
+    "walk_and_run",
+]
