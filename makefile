@@ -8,9 +8,10 @@ SRCS:=trailrunner
 venv: .venv
 
 dev:
-	flit install --symlink
+	python -m pip install -e .
 
 setup:
+	python -m pip install -U pip
 	python -m pip install -Ur requirements-dev.txt
 
 release: lint test clean
