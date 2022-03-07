@@ -1,6 +1,20 @@
 trailrunner
 ===========
 
+v1.1.3
+------
+
+Bugfix release
+
+- Export `__all__` from trailrunner to satisfy strict type checkers (#40)
+
+```
+$ git shortlog -s v1.1.2...v1.1.3
+     3	John Reese
+     3	dependabot[bot]
+```
+
+
 v1.1.2
 ------
 
