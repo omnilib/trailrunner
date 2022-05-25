@@ -170,7 +170,7 @@ class Trailrunner:
                     if ignore.match_file(relative):
                         continue
 
-                if child.is_file() and explicit or include.match_file(child):
+                if child.is_file() and (explicit or include.match_file(child)):
                     yield child
 
                 elif child.is_dir():
