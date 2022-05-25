@@ -8,6 +8,7 @@ Basic
 
 .. autofunction:: trailrunner.walk
 .. autofunction:: trailrunner.run
+.. autofunction:: trailrunner.run_iter
 .. autofunction:: trailrunner.walk_and_run
 
 

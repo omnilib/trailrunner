@@ -2,9 +2,19 @@
 # Licensed under the MIT license
 
 import multiprocessing
-from concurrent.futures import Executor
+from concurrent.futures import as_completed, Executor
 from pathlib import Path
-from typing import Callable, Dict, Iterable, Iterator, List, Optional, TypeVar
+from typing import (
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+)
 
 from pathspec import PathSpec, Pattern, RegexPattern
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
@@ -184,6 +194,24 @@ class Trailrunner:
 
         return dict(zip(paths, results))
 
+    def run_iter(
+        self, paths: Iterable[Path], func: Callable[[Path], T]
+    ) -> Generator[Tuple[Path, T], None, None]:
+        """
+        Run a given function once for each path, using an executor for concurrency.
+
+        For each path given, `func` will be called with `path` as the only argument.
+        To pass any other positional or keyword arguments, use `functools.partial`.
+
+        Each path, and the function result, will be yielded as they are completed.
+        """
+        with self.executor_factory() as exe:
+            futures = {exe.submit(func, path): path for path in paths}
+            for future in as_completed(futures):
+                path = futures[future]
+                value = future.result()
+                yield path, value
+
     def walk_and_run(
         self,
         paths: Iterable[Path],
@@ -237,6 +265,24 @@ def run(paths: Iterable[Path], func: Callable[[Path], T]) -> Dict[Path, T]:
     processes are not possible.
     """
     return Trailrunner().run(paths, func)
+
+
+def run_iter(
+    paths: Iterable[Path], func: Callable[[Path], T]
+) -> Generator[Tuple[Path, T], None, None]:
+    """
+    Run a given function once for each path, using a process pool for concurrency.
+
+    For each path given, `func` will be called with `path` as the only argument.
+    To pass any other positional or keyword arguments, use `functools.partial`.
+
+    Each path, and the function result, will be yielded as they are completed.
+
+    Uses a process pool with "spawned" processes that share no state with the parent
+    process, to enforce consistent behavior on Linux, macOS, and Windows, where forked
+    processes are not possible.
+    """
+    return Trailrunner().run_iter(paths, func)
 
 
 def walk_and_run(
