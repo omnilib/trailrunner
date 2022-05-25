@@ -7,7 +7,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Iterator
+from typing import Generator, Iterator
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -304,6 +304,27 @@ class CoreTest(TestCase):
         ]
         expected = {p: p.as_posix() for p in paths}
         result = core.run(paths, get_posix)
+        self.assertDictEqual(expected, result)
+
+    def test_run_iter(self) -> None:
+        def get_posix(path: Path) -> str:
+            return path.as_posix()
+
+        paths = [
+            Path("foo") / "bar" / "baz.py",
+            Path("bingo.py"),
+            Path("/frob/glob.pyi"),
+        ]
+        expected = {p: p.as_posix() for p in paths}
+
+        gen = core.run_iter(paths, get_posix)
+        self.assertIsInstance(gen, Generator)
+
+        result = {}
+        for path, value in gen:
+            self.assertIn(path, paths)
+            result[path] = value
+
         self.assertDictEqual(expected, result)
 
     def test_walk_then_run(self) -> None:
