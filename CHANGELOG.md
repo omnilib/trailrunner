@@ -1,6 +1,19 @@
 trailrunner
 ===========
 
+v1.2.1
+------
+
+Bugfix release
+
+- Fix: ignore file paths that don't exist, even if explicitly given
+
+```
+$ git shortlog -s v1.2.0...v1.2.1
+     2	John Reese
+```
+
+
 v1.2.0
 ------
 
