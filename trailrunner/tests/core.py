@@ -178,6 +178,11 @@ class CoreTest(TestCase):
         (self.td / "vendor" / "useful").mkdir(parents=True)
         (self.td / "vendor" / "useful" / "old.py").write_text("\n")
 
+        with self.subTest("explicit txt files"):
+            result = sorted(core.walk(inner / "requirements.txt"))
+            expected = [inner / "requirements.txt"]
+            self.assertListEqual(expected, result)
+
         with self.subTest("absolute root no gitignore"):
             result = sorted(core.walk(self.td))
             expected = [

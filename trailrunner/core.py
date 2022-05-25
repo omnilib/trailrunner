@@ -150,7 +150,7 @@ class Trailrunner:
         ignore = gitignore(root) + pathspec(excludes)
         include = PathSpec([RegexPattern(INCLUDE_PATTERN)])
 
-        def gen(children: Iterable[Path]) -> Iterator[Path]:
+        def gen(children: Iterable[Path], *, explicit: bool = False) -> Iterator[Path]:
             for child in children:
                 if ignore.match_file(child):
                     continue
@@ -160,13 +160,13 @@ class Trailrunner:
                     if ignore.match_file(relative):
                         continue
 
-                if child.is_file() and include.match_file(child):
+                if child.is_file() and explicit or include.match_file(child):
                     yield child
 
                 elif child.is_dir():
                     yield from gen(child.iterdir())
 
-        return gen([path])
+        return gen([path], explicit=True)
 
     def run(self, paths: Iterable[Path], func: Callable[[Path], T]) -> Dict[Path, T]:
         """
