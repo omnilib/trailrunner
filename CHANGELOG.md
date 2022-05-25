@@ -1,6 +1,21 @@
 trailrunner
 ===========
 
+v1.2.0
+------
+
+Feature release
+
+- New: `run_iter()` variant that yields results as they complete (#52)
+- Fix: `walk()` includes explicitly listed files, even if they don't match include pattern (#51)
+
+```
+$ git shortlog -s v1.1.3...v1.2.0
+     7	John Reese
+     6	dependabot[bot]
+```
+
+
 v1.1.3
 ------
 
