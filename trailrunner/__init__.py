@@ -1,11 +1,11 @@
-# Copyright 2021 John Reese
+# Copyright 2022 Amethyst Reese
 # Licensed under the MIT license
 
 """
 Run things on paths
 """
 
-__author__ = "John Reese"
+__author__ = "Amethyst Reese"
 from .__version__ import __version__
 from .core import (
     gitignore,
