@@ -2,7 +2,7 @@
 # Licensed under the MIT license
 
 import multiprocessing
-from concurrent.futures import as_completed, Executor
+from concurrent.futures import as_completed, Executor, ProcessPoolExecutor
 from pathlib import Path
 from typing import (
     Callable,
@@ -20,7 +20,6 @@ from typing import (
 from pathspec import PathSpec, Pattern, RegexPattern
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
-from .compat import ProcessPoolExecutor
 
 T = TypeVar("T")
 Excludes = Optional[List[str]]
