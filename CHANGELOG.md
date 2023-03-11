@@ -10,7 +10,7 @@ Bugfix release
 
 ```
 $ git shortlog -s v1.2.0...v1.2.1
-     2	John Reese
+     2	Amethyst Reese
 ```
 
 
@@ -24,7 +24,7 @@ Feature release
 
 ```
 $ git shortlog -s v1.1.3...v1.2.0
-     7	John Reese
+     7	Amethyst Reese
      6	dependabot[bot]
 ```
 
@@ -38,7 +38,7 @@ Bugfix release
 
 ```
 $ git shortlog -s v1.1.2...v1.1.3
-     3	John Reese
+     3	Amethyst Reese
      3	dependabot[bot]
 ```
 
@@ -53,7 +53,7 @@ Maintenance release
 
 ```
 $ git shortlog -s v1.1.1...v1.1.2
-     9	John Reese
+     9	Amethyst Reese
     29	dependabot[bot]
 ```
 
@@ -67,7 +67,7 @@ Compatibility update:
 
 ```
 $ git shortlog -s v1.1.0...v1.1.1
-     3	John Reese
+     3	Amethyst Reese
      1	Tim Hatch
 ```
 
@@ -84,7 +84,7 @@ Feature release:
 
 ```
 $ git shortlog -s v1.1.0b1...v1.1.0
-     9	John Reese
+     9	Amethyst Reese
 ```
 
 
@@ -101,7 +101,7 @@ Release Candidate
 
 ```
 $ git shortlog -s v1.0.0...v1.1.0b1
-     8	John Reese
+     8	Amethyst Reese
 ```
 
 
@@ -115,6 +115,6 @@ Initial release
 
 ```
 $ git shortlog -s v1.0.0
-     9	John Reese
+     9	Amethyst Reese
 ```
 
