@@ -121,17 +121,23 @@ class Trailrunner:
     def __init__(
         self,
         *,
+        concurrency: int = 0,
         context: Optional[multiprocessing.context.BaseContext] = None,
         executor_factory: Optional[Callable[[], Executor]] = None,
     ):
         """
+        :param concurreny: maximum number of child processes to use for jobs.
+            Values ``< 1`` will use the default concurrency level from
+            :mod:`concurrent.futures.ProcessPoolExecutor`. Ignored if
+            :attr:`DEFAULT_EXECUTOR` is set, or `executor_factory` is passed.
         :param context: :mod:`multiprocessing` context used by the default process pool
             executor. Ignored if :attr:`DEFAULT_EXECUTOR` is set, or `executor_factory`
-            is passed. Not supported in Python 3.6 or older.
+            is passed.
         :param executor_factory: Alternative executor factory. Must be a function that
             takes no arguments, and returns an instance
             of :class:`concurrent.futures.Executor`.
         """
+        self.concurrency = concurrency
         self.context = context or multiprocessing.get_context("spawn")
         self.executor_factory = (
             executor_factory or self.DEFAULT_EXECUTOR or self._default_executor
@@ -143,7 +149,8 @@ class Trailrunner:
         """
         if EXECUTOR:  # deprecated
             return EXECUTOR()
-        return ProcessPoolExecutor(mp_context=self.context)
+        concurrency = self.concurrency if self.concurrency > 0 else None
+        return ProcessPoolExecutor(concurrency, mp_context=self.context)
 
     def walk(self, path: Path, *, excludes: Excludes = None) -> Iterator[Path]:
         """

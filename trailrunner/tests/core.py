@@ -79,6 +79,24 @@ class CoreTest(TestCase):
                         core.Trailrunner().run(inputs, getpid)
                         mock_exe.assert_called_with()
 
+    @patch("trailrunner.core.ProcessPoolExecutor")
+    def test_concurrency(self, pool_mock) -> None:
+        (self.td / "foo.py").write_text("\n")
+        (self.td / "bar.py").write_text("\n")
+
+        with patch.object(core.Trailrunner, "DEFAULT_EXECUTOR", None):
+            for level, expected_param in [
+                (1, 1),
+                (5, 5),
+                (0, None),
+                (-365, None),
+            ]:
+                with self.subTest(level):
+                    tr = core.Trailrunner(concurrency=level)
+                    tr.walk_and_run([self.td], Path.resolve)
+                    pool_mock.assert_called_with(expected_param, mp_context=tr.context)
+
+
     def test_project_root_empty(self) -> None:
         result = core.project_root(self.td)
         self.assertTrue(self.td.relative_to(result))
