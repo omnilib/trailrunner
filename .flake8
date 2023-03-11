@@ -10,6 +10,9 @@ ignore =
     E3
     E4
     E501
+
+    # requires Python 3.10
+    B905
 max-line-length = 88
 per-file-ignores =
     __init__.py: F401
