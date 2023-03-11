@@ -18,10 +18,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
       - name: Set Up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            requirements*.txt
           python-version: ${{ matrix.python-version }}
       - name: Install
         run: |
