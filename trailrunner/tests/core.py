@@ -144,7 +144,7 @@ class CoreTest(TestCase):
         with self.subTest("no .gitignore"):
             result = core.gitignore(self.td)
             self.assertIsInstance(result, PathSpec)
-            self.assertListEqual([], result.patterns)
+            self.assertListEqual([], list(result.patterns))
 
         (self.td / "foo.py").write_text("\n")
 

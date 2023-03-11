@@ -13,6 +13,7 @@ from typing import (
     List,
     Optional,
     Tuple,
+    Type,
     TypeVar,
 )
 
@@ -61,7 +62,9 @@ def project_root(path: Path) -> Path:
     return parent
 
 
-def pathspec(patterns: Excludes, *, style: Pattern = GitWildMatchPattern) -> PathSpec:
+def pathspec(
+    patterns: Excludes, *, style: Type[Pattern] = GitWildMatchPattern
+) -> PathSpec:
     """
     Generate a `PathSpec` object for the given set of paths to include or exclude.
 
