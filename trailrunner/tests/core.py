@@ -9,7 +9,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Generator, Iterator
 from unittest import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
@@ -95,7 +95,6 @@ class CoreTest(TestCase):
                     tr = core.Trailrunner(concurrency=level)
                     tr.walk_and_run([self.td], Path)
                     pool_mock.assert_called_with(expected_param, mp_context=tr.context)
-
 
     def test_project_root_empty(self) -> None:
         result = core.project_root(self.td)
