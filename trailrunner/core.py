@@ -118,6 +118,8 @@ class Trailrunner:
     behavior with other packages that also use trailrunner.
     """
 
+    EXCLUDED: Dict[Path, str] = {}
+
     def __init__(
         self,
         *,
@@ -172,11 +174,13 @@ class Trailrunner:
         def gen(children: Iterable[Path], *, explicit: bool = False) -> Iterator[Path]:
             for child in children:
                 if ignore.match_file(child):
+                    self.EXCLUDED[child] = "matched ignore"
                     continue
 
                 if child.is_absolute():
                     relative = child.relative_to(root)
                     if ignore.match_file(relative):
+                        self.EXCLUDED[child] = "matched relative ignore"
                         continue
 
                 if child.is_file() and (explicit or include.match_file(child)):

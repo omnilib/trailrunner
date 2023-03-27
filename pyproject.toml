@@ -26,11 +26,13 @@ dependencies = [
 dev = [
     "attribution==1.6.2",
     "black==22.3.0",
+    "click==8.1.3",
     "coverage==6.5",
     "flit==3.7.1",
     "flake8==4.0.1",
     "flake8-bugbear==23.2.13",
     "mypy==1.1.1",
+    "rich==13.3.2",
     "ufmt==2.0.1",
     "usort==1.0.5",
 ]
