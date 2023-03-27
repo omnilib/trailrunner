@@ -309,6 +309,98 @@ class CoreTest(TestCase):
                 ]
                 self.assertListEqual(expected, result)
 
+    def test_walk_with_gitignore_matching_parents(self) -> None:
+        """
+        test gitignore that matches paths outside of project root
+        """
+        root = self.td / "inner"
+        root.mkdir()
+        (root / "pyproject.toml").write_text("")
+        (root / "foo.py").write_text("")
+        (root / "something.py").write_text("")
+        (root / "inner").mkdir()
+        (root / "inner" / "voice.py").write_text("")
+
+        with self.subTest("without gitignore"):
+            runner = core.Trailrunner()
+            result = sorted(runner.walk(root))
+            expected = sorted(
+                [
+                    root / "foo.py",
+                    root / "something.py",
+                    root / "inner" / "voice.py",
+                ]
+            )
+            self.assertListEqual(expected, result)
+
+        (root / ".gitignore").write_text("something.py\n")
+
+        with self.subTest("exclude something"):
+            runner = core.Trailrunner()
+            result = sorted(runner.walk(root))
+            expected = sorted(
+                [
+                    root / "foo.py",
+                    root / "inner" / "voice.py",
+                ]
+            )
+            self.assertListEqual(expected, result)
+
+        with self.subTest("exclude something (relative)"):
+            with cd(root):
+                runner = core.Trailrunner()
+                result = sorted(runner.walk(Path(".")))
+                expected = sorted(
+                    [
+                        Path("foo.py"),
+                        Path("inner") / "voice.py",
+                    ]
+                )
+                self.assertListEqual(expected, result)
+
+        with self.subTest("exclude something (relative inner)"):
+            with cd(root / "inner"):
+                runner = core.Trailrunner()
+                result = sorted(runner.walk(Path(".")))
+                expected = sorted(
+                    [
+                        Path("voice.py"),
+                    ]
+                )
+                self.assertListEqual(expected, result)
+
+        (root / ".gitignore").write_text("inner/\n")
+
+        with self.subTest("exclude inner"):
+            runner = core.Trailrunner()
+            result = sorted(runner.walk(root))
+            expected = sorted(
+                [
+                    root / "foo.py",
+                    root / "something.py",
+                ]
+            )
+            self.assertListEqual(expected, result)
+
+        with self.subTest("exclude inner (relative)"):
+            with cd(root):
+                runner = core.Trailrunner()
+                result = sorted(runner.walk(Path(".")))
+                expected = sorted(
+                    [
+                        Path("foo.py"),
+                        Path("something.py"),
+                    ]
+                )
+                self.assertListEqual(expected, result)
+
+        with self.subTest("exclude inner (relative inner)"):
+            with cd(root / "inner"):
+                runner = core.Trailrunner()
+                result = sorted(runner.walk(Path(".")))
+                expected = sorted([])
+                self.assertListEqual(expected, result)
+
     def test_run(self) -> None:
         def get_posix(path: Path) -> str:
             return path.as_posix()
