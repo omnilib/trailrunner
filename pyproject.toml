@@ -56,6 +56,7 @@ name = "trailrunner"
 package = "trailrunner"
 version_file = true
 signed_tags = true
+ignored_authors = ["dependabot"]
 
 [tool.coverage.run]
 branch = true
